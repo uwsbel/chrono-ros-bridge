@@ -1,5 +1,5 @@
 cmake_minimum_required(VERSION 3.8)
-project(chrono-ros-bridge)
+project(chrono_ros_bridge)
 
 if(CMAKE_COMPILER_IS_GNUCXX OR CMAKE_CXX_COMPILER_ID MATCHES "Clang")
   add_compile_options(-Wall -Wextra -Wpedantic)
@@ -9,7 +9,21 @@ endif()
 find_package(ament_cmake REQUIRED)
 # uncomment the following section in order to fill in
 # further dependencies manually.
-# find_package(<dependency> REQUIRED)
+find_package(rclcpp REQUIRED)
+
+include_directories(include)
+
+add_executable(chrono_ros_bridge
+	src/ChROSBridge.cpp
+	src/chrono/ChStream.cpp
+	src/chrono/ChSocket.cpp
+	src/chrono/ChHostInfo.cpp
+	src/chrono/ChSocketFramework.cpp)
+ament_target_dependencies(chrono_ros_bridge rclcpp)
+
+install(TARGETS
+	chrono_ros_bridge	
+	DESTINATION lib/${PROJECT_NAME})
 
 if(BUILD_TESTING)
   find_package(ament_lint_auto REQUIRED)
