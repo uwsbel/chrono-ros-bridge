@@ -2,8 +2,7 @@
 
 #include "rclcpp/rclcpp.hpp"
 
-#include "chrono/socket/ChSocket.h"
-#include "chrono/socket/ChExceptionSocket.h"
+#include "chrono_ros_bridge/ChSocket.h"
 
 namespace chrono {
 namespace ros {
@@ -17,7 +16,7 @@ class ChROSBridge : public rclcpp::Node {
 
     rclcpp::TimerBase::SharedPtr m_timer;
 
-    std::unique_ptr<chrono::socket::ChSocketTCP> m_client;
+    std::unique_ptr<chrono::utils::ChSocketTCP> m_client;
 };
 
 }  // namespace ros

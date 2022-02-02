@@ -15,15 +15,29 @@
 #ifndef CHSOCKET_H
 #define CHSOCKET_H
 
-// Based on the work of Liyang Yu in the tutorial of Codeproject
+#include "rclcpp/rclcpp.hpp"
+#include "chrono_ros_bridge/ChException.h"
 
-#include "chrono/socket/ChHostInfo.h"
+// This version is for both Windows and UNIX, the following statements
+// are used to set the flags WINDOWS_XP or UNIX that in these few files of 'socket'
+// code are used for conditional compilation
+#if (defined _WIN32)
+    #define WINDOWS_XP
+#endif
+#if (defined(__linux__) || defined(__APPLE__))
+    #define UNIX
+#endif
+
+// Based on the work of Liyang Yu in the tutorial of Codeproject
 
 #ifdef UNIX
     #include <sys/socket.h>
     #include <unistd.h>
     #include <fcntl.h>
     #include <cerrno>
+    #include <arpa/inet.h>
+    #include <netdb.h>
+    #include <netinet/in.h>
     #include <iostream>
     #include <sys/types.h>
     //#include <stropts.h>
@@ -41,11 +55,16 @@
     #include <winsock2.h>
 #endif
 
+#include <cstdio>
 #include <vector>
 #include <functional>
 
 namespace chrono {
-namespace socket {
+namespace utils {
+
+// For getting host info
+enum hostType { NAME, ADDRESS };
+const int HOST_NAME_LENGTH = 64;
 
 // so far we only consider the TCP socket, UDP will be added in later release
 // const int MAX_RECV_LEN = 1048576;
@@ -157,12 +176,12 @@ class ChSocketTCP : public ChSocket {
 
     /// Send a std::string to the connected host.
     /// Note that the string size is handled automatically because there is
-    /// an headed that tells the length of the string in bytes.
+    /// a header that tells the length of the string in bytes.
     int sendMessage(std::string&);
 
     /// Receive a std::string from the connected host.
     /// Note that the string size is handled automatically because there is
-    /// an headed that tells the length of the string in bytes.
+    /// a header that tells the length of the string in bytes.
     int receiveMessage(std::string&);
 
     /// Send a std::vector<char> (a buffer of bytes) to the connected host,
@@ -192,7 +211,7 @@ class ChSocketTCP : public ChSocket {
     void listenToClient(int numPorts = 5);
 
     /// Connects to the server, a client call
-    virtual void connectToServer(const std::string& serverNameOrAddr, hostType hType);
+    virtual void connectToServer(const std::string&, hostType);
 
   private:
     void detectErrorBind(int*, std::string&);
@@ -203,7 +222,113 @@ class ChSocketTCP : public ChSocket {
     void detectErrorListen(int*, std::string&);
 };
 
-}  // namespace socket
+/// A single object of this class must be instantiated before using
+/// all classes related to sockets, because it initializes some platform-specific
+/// settings.
+/// Delete it after you do not need sockets anymore.
+
+class ChSocketFramework {
+  public:
+    ChSocketFramework();
+    ~ChSocketFramework();
+};
+
+/// Class for exceptions that are thrown by TCP socket connections,
+/// used for example when connecting with other sw for cosimulation.
+
+class ChExceptionSocket : public ChException {
+  public:
+    ChExceptionSocket(int code, const std::string& what) : ChException(what), errorCode(code){};
+
+    // get socket error code in thrown exception
+    int getErrCode() { return errorCode; }
+
+    // std::string& getErrMsg() { return std::string(this->what()); }
+
+    void response() {
+        RCLCPP_FATAL_STREAM(rclcpp::get_logger("ChSocket"), "TCP socket error:");
+        RCLCPP_FATAL_STREAM(rclcpp::get_logger("ChSocket"), " ==> error code: " << errorCode);
+        RCLCPP_FATAL_STREAM(rclcpp::get_logger("ChSocket"), " ==> error message: " << this->what());
+    }
+
+  private:
+    int errorCode;
+};
+
+/*
+  Liyang Yu, Jan 9th, 2004, version 0.0
+
+  this is to implement the domain and IP address resolution.
+
+  3 cases are considered:
+
+  1. a host name is given (a host name looks like "www.delta.com"), query
+     the IP address of the host
+
+  2. an IP address is given (an IP address looks like 10.6.17.184), query
+     the host name
+
+  in the above two cases, the IP address and the host name are the same thing:
+  since IP address is hard to remember, they are usually aliased by a name, and this
+  name is known as the host name.
+
+  3. nothing is given. in other words, we don't know the host name or the IP address.
+     in this case, the standard host name for the current processor is used
+*/
+
+/// Class for storing information about a TCP host
+/// in socket communication, ex with an IP address.
+
+class ChSocketHostInfo {
+  private:
+#ifdef UNIX
+    char searchHostDB;  ///< search the host database flag
+#endif
+
+    struct hostent* hostPtr;  ///< Entry within the host address database
+
+  public:
+    /// Default constructor
+    ChSocketHostInfo();
+
+    /// Retrieves the host entry based on the host name or address.
+    ChSocketHostInfo(const std::string& hostName, hostType type);
+
+    /// Destructor.  Closes the host entry database.
+    ~ChSocketHostInfo() {
+#ifdef UNIX
+        endhostent();
+#endif
+    }
+
+#ifdef UNIX
+
+    /// Retrieves the next host entry in the database.
+    char getNextHost();
+
+    /// Opens the host entry database.
+    void openHostDb() {
+        endhostent();
+        searchHostDB = 1;
+        sethostent(1);
+    }
+
+#endif
+
+    /// Retrieves the hosts IP address in dot x.y.z.w notation.
+    char* getHostIPAddress();
+
+    /// Retrieves the hosts name.
+    char* getHostName() { return hostPtr->h_name; }
+
+  private:
+#ifdef WINDOWS_XP
+    void detectErrorGethostbyname(int*, std::string&);
+    void detectErrorGethostbyaddr(int*, std::string&);
+#endif
+};
+
+}  // namespace utils
 }  // end namespace chrono
 
 #endif

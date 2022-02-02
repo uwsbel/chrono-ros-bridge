@@ -19,6 +19,9 @@
 
 namespace chrono {
 
+/// Class for exceptions for throw() catch() mechanism.
+/// Each class can contain a message in form of text.
+
 class ChException : public std::exception {
   protected:
     std::string m_swhat;
@@ -42,6 +45,7 @@ class ChException : public std::exception {
     virtual const char* what() const throw() { return m_swhat.c_str(); }
 };
 
-}  // namespace chrono
+}  // end namespace chrono
 
 #endif
+

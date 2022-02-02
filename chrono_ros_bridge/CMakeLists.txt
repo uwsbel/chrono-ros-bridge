@@ -15,10 +15,7 @@ include_directories(include)
 
 add_executable(chrono_ros_bridge
 	src/ChROSBridge.cpp
-	src/chrono/ChStream.cpp
-	src/chrono/ChSocket.cpp
-	src/chrono/ChHostInfo.cpp
-	src/chrono/ChSocketFramework.cpp)
+	src/ChSocket.cpp)
 ament_target_dependencies(chrono_ros_bridge rclcpp)
 
 install(TARGETS
