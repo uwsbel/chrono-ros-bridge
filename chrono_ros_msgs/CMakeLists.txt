@@ -39,6 +39,7 @@ find_package(rosidl_default_generators REQUIRED)
 
 rosidl_generate_interfaces(${PROJECT_NAME}
   msg/ChVehicle.msg
+	msg/ChDriverInputs.msg
 
   DEPENDENCIES geometry_msgs std_msgs
 )

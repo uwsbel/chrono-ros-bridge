@@ -1,13 +1,4 @@
-#include <chrono>
-
-#include "rclcpp/serialization.hpp"
-
 #include "chrono_ros_bridge/ChROSBridge.h"
-
-#include "chrono_ros_msgs/msg/ch_vehicle.hpp"
-
-#include <sensor_msgs/msg/image.hpp>
-#include <rosgraph_msgs/msg/clock.hpp>
 
 using namespace rapidjson;
 using namespace chrono::utils;
@@ -16,19 +7,26 @@ using namespace std::chrono_literals;
 namespace chrono {
 namespace ros {
 
-ChROSBridge::ChROSBridge() : Node("chrono_ros_bridge") {
+ChROSBridge::ChROSBridge() : Node("chrono_ros_bridge"), m_writer(m_buffer) {
+    using namespace std::placeholders;
+
+    // Declare parameters
     auto port = this->declare_parameter("port", 50000);
     auto ip = this->declare_parameter("ip", "127.0.0.1");
 
-    // TODO: Make a parameter to get port
+    // Create the client
     m_client = std::make_unique<ChSocketTCP>(port);
     m_client->connectToServer(ip, utils::ADDRESS);
 
     // Parsers
-    m_message_parsers["ChSystem"] = std::bind(&ChROSBridge::MessageParser_ChSystem, this, std::placeholders::_1);
-    m_message_parsers["ChVehicle"] = std::bind(&ChROSBridge::MessageParser_ChVehicle, this, std::placeholders::_1);
-    m_message_parsers["ChCameraSensor"] =
-        std::bind(&ChROSBridge::MessageParser_ChCameraSensor, this, std::placeholders::_1);
+    m_message_parsers["ChSystem"] = std::bind(&ChROSBridge::MessageParser_ChSystem, this, _1);
+    m_message_parsers["ChVehicle"] = std::bind(&ChROSBridge::MessageParser_ChVehicle, this, _1);
+    m_message_parsers["ChCameraSensor"] = std::bind(&ChROSBridge::MessageParser_ChCameraSensor, this, _1);
+
+    // Generators
+    std::function<void(std::shared_ptr<chrono_ros_msgs::msg::ChDriverInputs>)> callback =
+        std::bind(&ChROSBridge::MessageGenerator_ChDriverInputs, this, _1);
+    CreateSubscription("ChDriverInputs", "inputs", callback);
 
     m_timer = this->create_wall_timer(1us, std::bind(&ChROSBridge::TimerCallback, this));
 }
@@ -57,14 +55,38 @@ void ChROSBridge::TimerCallback() {
         // Send
         // ----
         {
-            std::string message =
-                "[{\"type\":\"ChDriverInputs\",\"data\":{\"throttle\":1.0,\"steering\":0.0,\"braking\":0.0}}]";
+            std::scoped_lock lock(m_mutex);
+
+            m_writer.EndArray();
+            std::string message(m_buffer.GetString());
             m_client->sendMessage(message);
+
+            // Restart the buffer
+            m_buffer.Clear();
+            m_writer.Reset(m_buffer);
+            m_writer.StartArray();
         }
     } catch (utils::ChExceptionSocket& exception) {
         std::cout << " ERRROR with socket system: \n" << exception.what() << std::endl;
     }
 }
+
+// ------------------
+// Message Generators
+// ------------------
+
+void ChROSBridge::MessageGenerator_ChDriverInputs(std::shared_ptr<chrono_ros_msgs::msg::ChDriverInputs> msg) {
+    m_writer.Key("steering");
+    m_writer.Double(msg->steering);
+    m_writer.Key("throttle");
+    m_writer.Double(msg->throttle);
+    m_writer.Key("braking");
+    m_writer.Double(msg->braking);
+}
+
+// ---------------
+// Message Parsers
+// ---------------
 
 geometry_msgs::msg::Point ChROSBridge::MessageParser_Point(const Value& v) {
     auto arr = v.GetArray();
@@ -105,7 +127,7 @@ void ChROSBridge::MessageParser_ChSystem(const Value& v) {
     rosgraph_msgs::msg::Clock msg;
     int64_t nanoseconds = (int64_t)(data["time"].GetDouble() * 1e9);
     msg.clock = rclcpp::Time(nanoseconds);
-    Publish(name, type, "rosgraph_msgs/msg/Clock", msg);
+    Publish(name, type, msg);
 }
 
 void ChROSBridge::MessageParser_ChVehicle(const Value& v) {
@@ -121,7 +143,7 @@ void ChROSBridge::MessageParser_ChVehicle(const Value& v) {
     // msg.accel.linear = MessageParser_Vector3(data["accel"]);       // TODO
     // msg.accel.angular = MessageParser_Vector3(data["ang_accel"]);  // TODO
 
-    Publish(name, type, "chrono_ros_msgs/msg/ChVehicle", msg);
+    Publish(name, type, msg);
 }
 
 void ChROSBridge::MessageParser_ChCameraSensor(const Value& v) {
@@ -138,7 +160,7 @@ void ChROSBridge::MessageParser_ChCameraSensor(const Value& v) {
     const char* image_ptr = data["image"].GetString();
     msg.data = std::vector<uint8_t>(image_ptr, image_ptr + msg.height * msg.step);
 
-    Publish(name, type, "sensor_msgs/msg/Image", msg);
+    Publish(name, type, msg);
 }
 
 }  // namespace ros
