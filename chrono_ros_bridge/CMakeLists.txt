@@ -10,13 +10,27 @@ find_package(ament_cmake REQUIRED)
 # uncomment the following section in order to fill in
 # further dependencies manually.
 find_package(rclcpp REQUIRED)
+find_package(std_msgs REQUIRED)
+find_package(geometry_msgs REQUIRED)
+find_package(sensor_msgs REQUIRED)
+find_package(rosgraph_msgs REQUIRED)
+find_package(chrono_ros_msgs REQUIRED)
+find_package(RapidJSON REQUIRED)
 
 include_directories(include)
 
 add_executable(chrono_ros_bridge
 	src/ChROSBridge.cpp
 	src/ChSocket.cpp)
-ament_target_dependencies(chrono_ros_bridge rclcpp)
+ 
+ament_target_dependencies(chrono_ros_bridge 
+	rclcpp
+	std_msgs
+	geometry_msgs
+	sensor_msgs
+	rosgraph_msgs
+	chrono_ros_msgs
+)
 
 install(TARGETS
 	chrono_ros_bridge	

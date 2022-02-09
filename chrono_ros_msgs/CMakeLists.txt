@@ -37,9 +37,10 @@ endif()
 # Allow interfaces to be used for both C++ or Python
 find_package(rosidl_default_generators REQUIRED)
 
-# rosidl_generate_interfaces(${PROJECT_NAME}
-#
-#   DEPENDENCIES geometry_msgs std_msgs
-# )
+rosidl_generate_interfaces(${PROJECT_NAME}
+  msg/ChVehicle.msg
+
+  DEPENDENCIES geometry_msgs std_msgs
+)
 
 ament_package()
