@@ -20,8 +20,12 @@ find_package(RapidJSON REQUIRED)
 include_directories(include)
 
 add_executable(chrono_ros_bridge
+	src/chrono_ros_bridge_node.cpp
+
 	src/ChROSBridge.cpp
-	src/ChSocket.cpp)
+	src/ChSocket.cpp
+	src/ChJSONHelpers.cpp
+)
  
 ament_target_dependencies(chrono_ros_bridge 
 	rclcpp
