@@ -17,7 +17,7 @@ int main(int argc, char* argv[]) {
     bridge->AddMessageParser<chrono_ros_msgs::msg::ChVehicle>("ChVehicle", ChVehicle_converter);
     bridge->AddMessageParser<sensor_msgs::msg::Image>("ChCameraSensor", ChCameraSensor_converter);
 
-    bridge->AddMessageGenerator<chrono_ros_msgs::msg::ChDriverInputs>({"~/input/ChDriverInputs", "ChDriverInputs"},
+    bridge->AddMessageGenerator<chrono_ros_msgs::msg::ChDriverInputs>({"~/input/driver_inputs", "ChDriverInputs"},
                                                                       ChDriverInputs_converter);
 
     rclcpp::spin(bridge);
