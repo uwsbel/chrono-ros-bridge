@@ -36,11 +36,8 @@ SerializedMessagePtr ChCameraSensor_converter(chrono::utils::ChJSONReader& reade
     reader >> type >> id >> reader.GetObject();
 
     sensor_msgs::msg::Image msg;
-    reader >> msg.width >> msg.height >> msg.step >> msg.encoding;
-
-    std::string image_str;
-    reader >> image_str;
-    msg.data = std::vector<uint8_t>(image_str.begin(), image_str.end());
+    reader >> msg.width >> msg.height >> msg.step >> msg.encoding >> msg.data;
+    msg.step *= msg.width;
 
     return Serialize(msg);
 }

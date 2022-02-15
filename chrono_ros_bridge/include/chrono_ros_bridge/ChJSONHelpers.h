@@ -4,6 +4,7 @@
 #include <mutex>
 #include <string>
 #include <array>
+#include <vector>
 
 #include <rapidjson/document.h>
 #include <rapidjson/stringbuffer.h>
@@ -69,6 +70,7 @@ class ChJSONReader {
     ChJSONReader& operator>>(double& v);
     ChJSONReader& operator>>(float& v);
     ChJSONReader& operator>>(unsigned int& v);
+    ChJSONReader& operator>>(std::vector<uint8_t>& v);
     ChJSONReader& operator>>(std::string& v);
     ChJSONReader& operator>>(unsigned long& v);
     ChJSONReader& operator>>(unsigned long long& v);

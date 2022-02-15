@@ -150,8 +150,18 @@ ChJSONReader& ChJSONReader::operator>>(unsigned int& v) {
     return *this;
 }
 
+ChJSONReader& ChJSONReader::operator>>(std::vector<uint8_t>& v) {
+    const char* ptr = m_obj_iterator->value.GetString();
+    v.assign(ptr, ptr + m_obj_iterator->value.GetStringLength());
+    m_obj_iterator++;
+    return *this;
+}
+
 ChJSONReader& ChJSONReader::operator>>(std::string& v) {
-    INPUT(String, v);
+    std::string str = m_obj_iterator->value.GetString();
+    v.resize(m_obj_iterator->value.GetStringLength());
+    memcpy(&v[0], str.c_str(), m_obj_iterator->value.GetStringLength());
+    m_obj_iterator++;
     return *this;
 }
 
