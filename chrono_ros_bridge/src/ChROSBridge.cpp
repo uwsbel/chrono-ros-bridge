@@ -12,11 +12,17 @@ ChROSBridge::ChROSBridge() : Node("chrono_ros_bridge") {
 
     // Declare parameters
     auto port = this->declare_parameter("port", 50000);
-    auto ip = this->declare_parameter("ip", "127.0.0.1");
+    auto ip = this->declare_parameter("ip", "");
+    auto hostname = this->declare_parameter("hostname", "");
 
     // Create the client
     m_client = std::make_unique<ChSocketTCP>(port);
-    m_client->connectToServer(ip, utils::ADDRESS);
+    if (not ip.empty())
+        m_client->connectToServer(ip, utils::ADDRESS);
+    else if (not hostname.empty())
+        m_client->connectToServer(hostname, utils::NAME);
+    else
+        throw ChException("Either 'ip' or 'hostname' must be passed.");
 
     m_timer = this->create_wall_timer(1us, std::bind(&ChROSBridge::TimerCallback, this));
 }
