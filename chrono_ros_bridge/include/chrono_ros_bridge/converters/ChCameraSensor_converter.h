@@ -39,6 +39,8 @@ SerializedMessagePtr ChCameraSensor_converter(chrono::utils::ChJSONReader& reade
     reader >> msg.width >> msg.height >> msg.step >> msg.encoding >> msg.data;
     msg.step *= msg.width;
 
+    msg.header.frame_id = "map";
+
     return Serialize(msg);
 }
 
