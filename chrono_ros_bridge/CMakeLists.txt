@@ -7,38 +7,57 @@ endif()
 
 # find dependencies
 find_package(ament_cmake REQUIRED)
+find_package(ament_cmake_auto REQUIRED)
+find_package(ament_cmake_ros REQUIRED)
 # uncomment the following section in order to fill in
 # further dependencies manually.
-find_package(rclcpp REQUIRED)
-find_package(std_msgs REQUIRED)
-find_package(geometry_msgs REQUIRED)
-find_package(sensor_msgs REQUIRED)
-find_package(rosgraph_msgs REQUIRED)
-find_package(chrono_ros_msgs REQUIRED)
-find_package(RapidJSON REQUIRED)
 
-include_directories(include)
-
-add_executable(chrono_ros_bridge
-	src/chrono_ros_bridge_node.cpp
-
-	src/ChROSBridge.cpp
-	src/ChSocket.cpp
-	src/ChJSONHelpers.cpp
-)
- 
-ament_target_dependencies(chrono_ros_bridge 
+set(DEPENDENCIES
 	rclcpp
+	rclcpp_components
 	std_msgs
 	geometry_msgs
 	sensor_msgs
 	rosgraph_msgs
 	chrono_ros_msgs
+	RapidJSON
 )
 
+foreach (dependency IN LISTS DEPENDENCIES)
+  find_package(${dependency} REQUIRED)
+endforeach()
+
+ament_auto_find_build_dependencies(REQUIRED ${DEPENDENCIES})
+
+ament_auto_add_library(${PROJECT_NAME} SHARED
+  src/chrono_ros_bridge_node.cpp
+
+	src/ChROSBridge.cpp
+	src/ChSocket.cpp
+	src/ChJSONHelpers.cpp
+)
+target_include_directories(${PROJECT_NAME} PRIVATE 
+  include
+)
+rclcpp_components_register_nodes(${PROJECT_NAME} "chrono::ros::ChROSBridge")
+
+ament_auto_add_executable(${PROJECT_NAME}_node src/chrono_ros_bridge_node.cpp)
+
+# the node must go into the project specific lib directory or else
+# the launch file will not find it
+
 install(TARGETS
-	chrono_ros_bridge	
-	DESTINATION lib/${PROJECT_NAME})
+  ${PROJECT_NAME}_node
+  DESTINATION lib/${PROJECT_NAME}/
+)
+
+# the shared library goes into the global lib dir so it can
+# be used as a composable node by other projects
+
+install(TARGETS
+  ${PROJECT_NAME}
+  DESTINATION lib
+)
 
 if(BUILD_TESTING)
   find_package(ament_lint_auto REQUIRED)
@@ -51,4 +70,4 @@ if(BUILD_TESTING)
   ament_lint_auto_find_test_dependencies()
 endif()
 
-ament_package()
+ament_auto_package()

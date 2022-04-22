@@ -7,6 +7,8 @@
   <maintainer email="todo@todo.todo">aaronyoung</maintainer>
   <license>TODO: License declaration</license>
 
+	<depend>rclcpp</depend>
+	<depend>rclcpp_components</depend>
 	<depend>std_msgs</depend>
 	<depend>geometry_msgs</depend>
 	<depend>sensor_msgs</depend>
