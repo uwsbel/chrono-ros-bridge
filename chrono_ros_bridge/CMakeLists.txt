@@ -20,7 +20,6 @@ set(DEPENDENCIES
 	sensor_msgs
 	rosgraph_msgs
 	chrono_ros_msgs
-	RapidJSON
 )
 
 foreach (dependency IN LISTS DEPENDENCIES)
