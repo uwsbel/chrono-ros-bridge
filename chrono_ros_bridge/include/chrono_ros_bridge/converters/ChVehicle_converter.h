@@ -37,7 +37,20 @@ SerializedMessagePtr ChVehicle_converter(chrono::utils::ChJSONReader& reader) {
 
     std::array<double, 3> pos, lin_vel, ang_vel, lin_acc, ang_acc;
     std::array<double, 4> rot;
-    reader >> pos >> rot >> lin_vel >> ang_vel >> lin_acc >> ang_acc;
+
+    reader >> pos;
+    reader.Next();
+    reader >> rot;
+    reader.Next();
+    reader >> lin_vel;
+    reader.Next();
+    reader >> ang_vel;
+    reader.Next();
+    reader >> lin_acc;
+    reader.Next();
+    reader >> ang_acc;
+    reader.Next();
+
 
     chrono_ros_msgs::msg::ChVehicle msg;
 
