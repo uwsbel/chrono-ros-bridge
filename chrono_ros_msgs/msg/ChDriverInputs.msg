@@ -2,6 +2,8 @@
 #
 # The input includes steering, throttle, and braking. 
 
+std_msgs/Header header
+
 # Steering value [-1,1]
 # -1 indicates turn fully to the left, 1 indicates turn fully to the right
 # Independent of the max turn of the vehicle hardware
