@@ -14,7 +14,6 @@ find_package(ament_cmake_ros REQUIRED)
 
 set(DEPENDENCIES
 	rclcpp
-	rclcpp_components
 	std_msgs
 	geometry_msgs
 	sensor_msgs
@@ -38,7 +37,6 @@ ament_auto_add_library(${PROJECT_NAME} SHARED
 target_include_directories(${PROJECT_NAME} PRIVATE 
   include
 )
-rclcpp_components_register_nodes(${PROJECT_NAME} "chrono::ros::ChROSBridge")
 
 ament_auto_add_executable(${PROJECT_NAME}_node src/chrono_ros_bridge_node.cpp)
 
