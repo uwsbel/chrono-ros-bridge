@@ -1,5 +1,5 @@
 cmake_minimum_required(VERSION 3.5)
-project(chrono_ros_msgs)
+project(chrono_ros_interfaces)
 
 # Default to C99
 if(NOT CMAKE_C_STANDARD)
@@ -40,6 +40,9 @@ find_package(rosidl_default_generators REQUIRED)
 rosidl_generate_interfaces(${PROJECT_NAME}
   msg/ChVehicle.msg
 	msg/ChDriverInputs.msg
+
+  srv/ChStartSimulation.srv
+  srv/ChStopSimulation.srv
 
   DEPENDENCIES geometry_msgs std_msgs
 )
